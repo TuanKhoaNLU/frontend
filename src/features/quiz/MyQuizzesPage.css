@@ -1,0 +1,132 @@
+.my-quizzes {
+  display: grid;
+  gap: 14px;
+}
+
+.my-quizzes-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.my-quizzes-head h2 {
+  margin: 0;
+}
+
+.my-quizzes-create,
+.my-quizzes-login {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.my-quizzes-list {
+  display: grid;
+  gap: 10px;
+}
+
+.my-quiz-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.my-quiz-card h3 {
+  margin: 0;
+  color: #312e81;
+}
+
+.my-quiz-card p {
+  margin: 0;
+  color: #64748b;
+}
+
+.my-quiz-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.my-quiz-actions button {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  color: white;
+  background: #7c3aed;
+  cursor: pointer;
+}
+
+.my-quiz-edit-content-link {
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  color: white;
+  background: #4f46e5;
+  text-decoration: none;
+}
+
+.my-quiz-actions button.secondary {
+  background: #475569;
+}
+
+.my-quiz-actions button.danger {
+  background: #dc2626;
+}
+
+.my-quiz-edit {
+  display: grid;
+  gap: 8px;
+}
+
+.my-quiz-edit input[type="text"],
+.my-quiz-edit input:not([type]) {
+  width: 100%;
+}
+
+.my-quiz-edit label {
+  display: grid;
+  gap: 5px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.my-quiz-edit input {
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.my-quiz-published-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-quizzes-error {
+  margin: 0;
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.my-quizzes-loading,
+.my-quizzes-empty {
+  margin: 0;
+  color: #64748b;
+}
+
+.my-quizzes-locked h2,
+.my-quizzes-locked p {
+  margin: 0 0 10px;
+}

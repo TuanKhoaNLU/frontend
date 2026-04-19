@@ -1,0 +1,18 @@
+.register-footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.register-footer a {
+  color: #5b21b6;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.register-footer a:hover {
+  color: #7c3aed;
+}

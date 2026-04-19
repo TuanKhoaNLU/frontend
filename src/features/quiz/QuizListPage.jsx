@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import apiClient from "../../api/client";
 import "./QuizListPage.css";
 
@@ -47,6 +48,9 @@ function QuizListPage() {
             <a className="quiz-btn quiz-btn--primary" href="#quiz-list">
               Start playing
             </a>
+            <Link className="quiz-btn quiz-btn--ghost" to="/create-quiz">
+              Create quiz
+            </Link>
           </div>
         </div>
         <div className="quiz-hero-card">

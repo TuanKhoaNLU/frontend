@@ -18,13 +18,16 @@ function createEmptySlide() {
     options: ["", "", "", ""],
     correctOptionIndexes: [0],
     orderingItems: ["", ""],
-    acceptedAnswersText: ""
+    acceptedAnswersText: "",
+    timeLimitSeconds: 15
   };
 }
 
 function CreateQuizPage({ isLoggedIn }) {
   const [title, setTitle] = useState("");
   const [published, setPublished] = useState(true);
+  const [mode, setMode] = useState("NORMAL");
+  const [totalTimeLimitSeconds, setTotalTimeLimitSeconds] = useState("");
   const [slides, setSlides] = useState([createEmptySlide()]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -114,12 +117,15 @@ function CreateQuizPage({ isLoggedIn }) {
 
   const buildPayload = () => ({
     title: title.trim(),
+    mode,
     published,
+    totalTimeLimitSeconds: mode === "NORMAL" && totalTimeLimitSeconds ? Number(totalTimeLimitSeconds) : null,
     slides: slides.map((slide) => {
       const base = {
         type: slide.type,
         question: slide.question.trim(),
-        imageUrl: slide.imageUrl.trim()
+        imageUrl: slide.imageUrl.trim(),
+        timeLimitSeconds: mode === "TIME" ? Number(slide.timeLimitSeconds || 15) : null
       };
 
       if (slide.type === "SINGLE_CHOICE" || slide.type === "MULTI_CHOICE") {
@@ -157,6 +163,8 @@ function CreateQuizPage({ isLoggedIn }) {
       setTitle("");
       setSlides([createEmptySlide()]);
       setPublished(true);
+      setMode("NORMAL");
+      setTotalTimeLimitSeconds("");
     } catch (err) {
       const status = err?.response?.status;
       const message = err?.response?.data?.message;
@@ -200,6 +208,27 @@ function CreateQuizPage({ isLoggedIn }) {
           <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
           Publish ngay sau khi tạo
         </label>
+
+        <label className="create-quiz-label">
+          Quiz mode
+          <select className="create-quiz-input" value={mode} onChange={(e) => setMode(e.target.value)}>
+            <option value="NORMAL">Normal mode</option>
+            <option value="TIME">Time mode</option>
+          </select>
+        </label>
+
+        {mode === "NORMAL" && (
+          <label className="create-quiz-label">
+            Giới hạn tổng thời gian (giây, để trống nếu không giới hạn)
+            <input
+              className="create-quiz-input"
+              type="number"
+              min={10}
+              value={totalTimeLimitSeconds}
+              onChange={(e) => setTotalTimeLimitSeconds(e.target.value)}
+            />
+          </label>
+        )}
 
         {slides.map((slide, index) => (
           <article className="slide-card" key={`slide-${index}`}>
@@ -251,6 +280,21 @@ function CreateQuizPage({ isLoggedIn }) {
                 onChange={(e) => updateSlide(index, { imageUrl: e.target.value })}
               />
             </label>
+
+            {mode === "TIME" && (
+              <label className="create-quiz-label">
+                Thời gian trả lời câu (10-30 giây)
+                <input
+                  className="create-quiz-input"
+                  type="number"
+                  min={10}
+                  max={30}
+                  value={slide.timeLimitSeconds}
+                  onChange={(e) => updateSlide(index, { timeLimitSeconds: e.target.value })}
+                  required
+                />
+              </label>
+            )}
 
             {(slide.type === "SINGLE_CHOICE" || slide.type === "MULTI_CHOICE") && (
               <div className="slide-options">

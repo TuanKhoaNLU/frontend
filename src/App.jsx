@@ -4,6 +4,7 @@ import RegisterPage from "./features/auth/RegisterPage";
 import CreateQuizPage from "./features/quiz/CreateQuizPage";
 import EditQuizPage from "./features/quiz/EditQuizPage";
 import MyQuizzesPage from "./features/quiz/MyQuizzesPage";
+import PlayQuizPage from "./features/quiz/PlayQuizPage";
 import QuizListPage from "./features/quiz/QuizListPage";
 import { clearAccessToken, getAccessToken, onAccessTokenChanged } from "./features/auth/tokenStorage";
 import apiClient from "./api/client";
@@ -92,6 +93,7 @@ function App() {
           <Route path="/create-quiz" element={<CreateQuizPage isLoggedIn={Boolean(token)} />} />
           <Route path="/my-quizzes" element={<MyQuizzesPage isLoggedIn={Boolean(token)} />} />
           <Route path="/my-quizzes/:quizId/edit" element={<EditQuizPage isLoggedIn={Boolean(token)} />} />
+          <Route path="/play/:quizId" element={<PlayQuizPage />} />
         </Routes>
       </main>
 

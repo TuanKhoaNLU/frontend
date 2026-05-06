@@ -127,9 +127,9 @@ function QuizListPage() {
               </div>
               <h3 className="quiz-item-title">{quiz.title}</h3>
               <p className="quiz-item-meta">Quiz #{quiz.id}</p>
-              <button type="button" className="quiz-item-play" disabled>
-                Play soon
-              </button>
+              <Link className="quiz-item-play" to={`/play/${quiz.id}`}>
+                Play now
+              </Link>
             </li>
           ))}
         </ul>

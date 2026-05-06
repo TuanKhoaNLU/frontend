@@ -33,7 +33,8 @@ function mapApiSlideToForm(slide) {
       options,
       correctOptionIndexes: slide.correctOptionIndexes?.length ? slide.correctOptionIndexes : [0],
       orderingItems: ["", ""],
-      acceptedAnswersText: ""
+      acceptedAnswersText: "",
+      timeLimitSeconds: slide.timeLimitSeconds ?? 15
     };
   }
   if (slide.type === "ORDERING") {
@@ -44,7 +45,8 @@ function mapApiSlideToForm(slide) {
       options: ["", "", "", ""],
       correctOptionIndexes: [0],
       orderingItems: slide.orderingItems?.length ? slide.orderingItems : ["", ""],
-      acceptedAnswersText: ""
+      acceptedAnswersText: "",
+      timeLimitSeconds: slide.timeLimitSeconds ?? 15
     };
   }
   return {
@@ -54,7 +56,8 @@ function mapApiSlideToForm(slide) {
     options: ["", "", "", ""],
     correctOptionIndexes: [0],
     orderingItems: ["", ""],
-    acceptedAnswersText: (slide.acceptedAnswers || []).join("\n")
+    acceptedAnswersText: (slide.acceptedAnswers || []).join("\n"),
+    timeLimitSeconds: slide.timeLimitSeconds ?? 15
   };
 }
 
@@ -63,6 +66,8 @@ function EditQuizPage({ isLoggedIn }) {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [published, setPublished] = useState(true);
+  const [mode, setMode] = useState("NORMAL");
+  const [totalTimeLimitSeconds, setTotalTimeLimitSeconds] = useState("");
   const [slides, setSlides] = useState([createEmptySlide()]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -84,6 +89,8 @@ function EditQuizPage({ isLoggedIn }) {
         const data = response.data;
         setTitle(data.title || "");
         setPublished(Boolean(data.published));
+        setMode(data.mode || "NORMAL");
+        setTotalTimeLimitSeconds(data.totalTimeLimitSeconds?.toString() || "");
         setSlides((data.slides || []).map(mapApiSlideToForm));
       } catch (err) {
         setError(err?.response?.data?.message || "Không tải được quiz để chỉnh sửa.");
@@ -171,12 +178,15 @@ function EditQuizPage({ isLoggedIn }) {
 
   const buildPayload = () => ({
     title: title.trim(),
+    mode,
     published,
+    totalTimeLimitSeconds: mode === "NORMAL" && totalTimeLimitSeconds ? Number(totalTimeLimitSeconds) : null,
     slides: slides.map((slide) => {
       const base = {
         type: slide.type,
         question: slide.question.trim(),
-        imageUrl: slide.imageUrl.trim()
+        imageUrl: slide.imageUrl.trim(),
+        timeLimitSeconds: mode === "TIME" ? Number(slide.timeLimitSeconds || 15) : null
       };
       if (slide.type === "SINGLE_CHOICE" || slide.type === "MULTI_CHOICE") {
         return {
@@ -234,6 +244,27 @@ function EditQuizPage({ isLoggedIn }) {
           Published
         </label>
 
+        <label className="create-quiz-label">
+          Quiz mode
+          <select className="create-quiz-input" value={mode} onChange={(e) => setMode(e.target.value)}>
+            <option value="NORMAL">Normal mode</option>
+            <option value="TIME">Time mode</option>
+          </select>
+        </label>
+
+        {mode === "NORMAL" && (
+          <label className="create-quiz-label">
+            Giới hạn tổng thời gian (giây, để trống nếu không giới hạn)
+            <input
+              className="create-quiz-input"
+              type="number"
+              min={10}
+              value={totalTimeLimitSeconds}
+              onChange={(e) => setTotalTimeLimitSeconds(e.target.value)}
+            />
+          </label>
+        )}
+
         {slides.map((slide, index) => (
           <article className="slide-card" key={`slide-${index}`}>
             <div className="slide-card-top">
@@ -274,6 +305,21 @@ function EditQuizPage({ isLoggedIn }) {
                 onChange={(e) => updateSlide(index, { imageUrl: e.target.value })}
               />
             </label>
+
+            {mode === "TIME" && (
+              <label className="create-quiz-label">
+                Thời gian trả lời câu (10-30 giây)
+                <input
+                  className="create-quiz-input"
+                  type="number"
+                  min={10}
+                  max={30}
+                  value={slide.timeLimitSeconds}
+                  onChange={(e) => updateSlide(index, { timeLimitSeconds: e.target.value })}
+                  required
+                />
+              </label>
+            )}
 
             {(slide.type === "SINGLE_CHOICE" || slide.type === "MULTI_CHOICE") && (
               <div className="slide-options">

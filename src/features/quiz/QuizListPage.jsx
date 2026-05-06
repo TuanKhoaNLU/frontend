@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import apiClient from "../../api/client";
 import "./QuizListPage.css";
 
@@ -47,6 +48,9 @@ function QuizListPage() {
             <a className="quiz-btn quiz-btn--primary" href="#quiz-list">
               Start playing
             </a>
+            <Link className="quiz-btn quiz-btn--ghost" to="/create-quiz">
+              Create quiz
+            </Link>
           </div>
         </div>
         <div className="quiz-hero-card">
@@ -123,9 +127,9 @@ function QuizListPage() {
               </div>
               <h3 className="quiz-item-title">{quiz.title}</h3>
               <p className="quiz-item-meta">Quiz #{quiz.id}</p>
-              <button type="button" className="quiz-item-play" disabled>
-                Play soon
-              </button>
+              <Link className="quiz-item-play" to={`/play/${quiz.id}`}>
+                Play now
+              </Link>
             </li>
           ))}
         </ul>

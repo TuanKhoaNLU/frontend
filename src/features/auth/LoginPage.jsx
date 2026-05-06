@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import apiClient from "../../api/client";
 import { setAccessToken } from "./tokenStorage";
 import "./LoginPage.css";
@@ -62,7 +62,7 @@ function LoginPage({ isLoggedIn, onLogout }) {
             <input
               className="login-input"
               type="text"
-              placeholder="e.g. admin"
+              placeholder="Tên đăng nhập"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
@@ -87,8 +87,11 @@ function LoginPage({ isLoggedIn, onLogout }) {
         </form>
         {error && <p className="login-message error">{error}</p>}
         {success && <p className="login-message success">{success}</p>}
-        <p className="login-demo">
-          Demo: <strong>admin</strong> / <strong>admin123</strong>
+        <p className="login-register-row">
+          Chưa có tài khoản?{" "}
+          <Link className="login-register-link" to="/register">
+            Đăng ký
+          </Link>
         </p>
       </section>
     </div>

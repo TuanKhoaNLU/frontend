@@ -44,3 +44,12 @@ export function onAccessTokenChanged(callback) {
   window.addEventListener(AUTH_TOKEN_EVENT, callback);
   return () => window.removeEventListener(AUTH_TOKEN_EVENT, callback);
 }
+
+/** JWT `sub` = username (Spring Security subject). */
+export function getJwtUsername() {
+  const token = getAccessToken();
+  if (!token) return null;
+  const payload = parseJwtPayload(token);
+  if (!payload || typeof payload.sub !== "string") return null;
+  return payload.sub;
+}

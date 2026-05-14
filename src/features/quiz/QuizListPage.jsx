@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import apiClient from "../../api/client";
 import "./QuizListPage.css";
 
@@ -15,7 +15,8 @@ const CATEGORY_CHIPS = [
 
 const CARD_TONES = ["card--a", "card--b", "card--c", "card--d"];
 
-function QuizListPage() {
+function QuizListPage({ isLoggedIn = false }) {
+  const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
   const [error, setError] = useState("");
   const [roomId, setRoomId] = useState("");
@@ -58,6 +59,9 @@ function QuizListPage() {
             className="quiz-room-form"
             onSubmit={(e) => {
               e.preventDefault();
+              const pin = roomId.trim();
+              if (!pin) return;
+              navigate(`/live/join?pin=${encodeURIComponent(pin)}`);
             }}
           >
             <label className="quiz-room-label" htmlFor="quiz-room-id">
@@ -127,9 +131,16 @@ function QuizListPage() {
               </div>
               <h3 className="quiz-item-title">{quiz.title}</h3>
               <p className="quiz-item-meta">Quiz #{quiz.id}</p>
-              <Link className="quiz-item-play" to={`/play/${quiz.id}`}>
-                Play now
-              </Link>
+              <div className="quiz-item-actions">
+                <Link className="quiz-item-play" to={`/play/${quiz.id}`}>
+                  Play now
+                </Link>
+                {isLoggedIn && (
+                  <Link className="quiz-item-play quiz-item-play--secondary" to={`/live/host/${quiz.id}`}>
+                    Tạo phòng live
+                  </Link>
+                )}
+              </div>
             </li>
           ))}
         </ul>

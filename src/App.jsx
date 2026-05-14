@@ -6,6 +6,10 @@ import EditQuizPage from "./features/quiz/EditQuizPage";
 import MyQuizzesPage from "./features/quiz/MyQuizzesPage";
 import PlayQuizPage from "./features/quiz/PlayQuizPage";
 import QuizListPage from "./features/quiz/QuizListPage";
+import LiveJoinPage from "./features/live/LiveJoinPage";
+import LivePlayPage from "./features/live/LivePlayPage";
+import LiveLobbyPage from "./features/live/LiveLobbyPage";
+import LiveHostPage from "./features/live/LiveHostPage";
 import { clearAccessToken, getAccessToken, onAccessTokenChanged } from "./features/auth/tokenStorage";
 import apiClient from "./api/client";
 import { useEffect, useState } from "react";
@@ -54,6 +58,9 @@ function App() {
             <Link className="app-link app-link--primary" to="/">
               Quizzes
             </Link>
+            <Link className="app-link" to="/live/join">
+              Live (PIN)
+            </Link>
             {token && (
               <>
                 <Link className="app-link" to="/create-quiz">
@@ -87,13 +94,17 @@ function App() {
 
       <main className="app-content">
         <Routes>
-          <Route path="/" element={<QuizListPage />} />
+          <Route path="/" element={<QuizListPage isLoggedIn={Boolean(token)} />} />
           <Route path="/login" element={<LoginPage isLoggedIn={Boolean(token)} onLogout={handleLogout} />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/create-quiz" element={<CreateQuizPage isLoggedIn={Boolean(token)} />} />
           <Route path="/my-quizzes" element={<MyQuizzesPage isLoggedIn={Boolean(token)} />} />
           <Route path="/my-quizzes/:quizId/edit" element={<EditQuizPage isLoggedIn={Boolean(token)} />} />
           <Route path="/play/:quizId" element={<PlayQuizPage />} />
+          <Route path="/live/join" element={<LiveJoinPage />} />
+          <Route path="/live/lobby/:sessionId" element={<LiveLobbyPage />} />
+          <Route path="/live/play/:sessionId" element={<LivePlayPage />} />
+          <Route path="/live/host/:quizId" element={<LiveHostPage isLoggedIn={Boolean(token)} />} />
         </Routes>
       </main>
 

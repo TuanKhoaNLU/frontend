@@ -92,6 +92,9 @@ function MyQuizzesPage({ isLoggedIn }) {
               ID #{quiz.id} • {quiz.slideCount} slide • {quiz.published ? "Published" : "Hidden"}
             </p>
             <div className="my-quiz-actions">
+              <Link className="my-quiz-edit-content-link" to={`/live/host/${quiz.id}`}>
+                Tạo phòng live
+              </Link>
               <Link className="my-quiz-edit-content-link" to={`/my-quizzes/${quiz.id}/edit`}>
                 Sửa
               </Link>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import apiClient from "../../api/client";
 import { setAccessToken } from "./tokenStorage";
+import { auth, googleProvider, signInWithPopup } from "./firebaseConfig";
 import "./LoginPage.css";
 
 function LoginPage({ isLoggedIn, onLogout }) {
@@ -27,6 +28,28 @@ function LoginPage({ isLoggedIn, onLogout }) {
       setTimeout(() => navigate("/"), 500);
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed. Check username/password.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      setError("");
+      setSuccess("");
+      
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      
+      const response = await apiClient.post("/auth/google", { token: idToken });
+      
+      const { accessToken } = response.data;
+      setAccessToken(accessToken);
+      setSuccess("Google login successful. JWT saved.");
+      setTimeout(() => navigate("/"), 500);
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Google login failed.");
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +108,21 @@ function LoginPage({ isLoggedIn, onLogout }) {
             {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+        
+        <div className="login-divider">
+          <span>Hoặc</span>
+        </div>
+
+        <button 
+          className="login-button login-button--google" 
+          type="button" 
+          onClick={handleGoogleLogin} 
+          disabled={isLoading}
+        >
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google Logo" className="google-icon" />
+          Sign in with Google
+        </button>
+
         {error && <p className="login-message error">{error}</p>}
         {success && <p className="login-message success">{success}</p>}
         <p className="login-register-row">

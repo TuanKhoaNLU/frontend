@@ -10,6 +10,7 @@ import LiveJoinPage from "./features/live/LiveJoinPage";
 import LivePlayPage from "./features/live/LivePlayPage";
 import LiveLobbyPage from "./features/live/LiveLobbyPage";
 import LiveHostPage from "./features/live/LiveHostPage";
+import ProfilePage from "./features/profile/ProfilePage";
 import { clearAccessToken, getAccessToken, onAccessTokenChanged } from "./features/auth/tokenStorage";
 import apiClient from "./api/client";
 import { useEffect, useState } from "react";
@@ -69,12 +70,15 @@ function App() {
                 <Link className="app-link" to="/my-quizzes">
                   My Quizzes
                 </Link>
+                <Link className="app-link" to="/profile">
+                  Profile
+                </Link>
               </>
             )}
             {!token ? (
               <>
                 <Link className="app-link" to="/register">
-                  Đăng ký
+                  Register
                 </Link>
                 <Link className="app-link" to="/login">
                   Sign in
@@ -105,6 +109,7 @@ function App() {
           <Route path="/live/lobby/:sessionId" element={<LiveLobbyPage />} />
           <Route path="/live/play/:sessionId" element={<LivePlayPage />} />
           <Route path="/live/host/:quizId" element={<LiveHostPage isLoggedIn={Boolean(token)} />} />
+          <Route path="/profile" element={<ProfilePage isLoggedIn={Boolean(token)} />} />
         </Routes>
       </main>
 

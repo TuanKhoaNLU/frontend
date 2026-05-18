@@ -110,7 +110,7 @@ function LoginPage({ isLoggedIn, onLogout }) {
         </form>
         
         <div className="login-divider">
-          <span>Hoặc</span>
+          <span>Or</span>
         </div>
 
         <button 
@@ -126,9 +126,9 @@ function LoginPage({ isLoggedIn, onLogout }) {
         {error && <p className="login-message error">{error}</p>}
         {success && <p className="login-message success">{success}</p>}
         <p className="login-register-row">
-          Chưa có tài khoản?{" "}
+          Don't have an account?{" "}
           <Link className="login-register-link" to="/register">
-            Đăng ký
+            Register
           </Link>
         </p>
       </section>

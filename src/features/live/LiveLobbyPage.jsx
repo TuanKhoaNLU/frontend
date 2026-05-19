@@ -1,15 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/client";
 import { getJwtUsername } from "../auth/tokenStorage";
+import { useLiveSession } from "./useLiveSession";
 import "./LiveQuizPages.css";
 
 function LiveLobbyPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const [session, setSession] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [error, setError] = useState("");
+  const { session, leaderboard, error, setSession, setLeaderboard, setError } = useLiveSession(sessionId);
   const [busy, setBusy] = useState(false);
   const navigatedToPlayRef = useRef(false);
 
@@ -20,25 +19,8 @@ function LiveLobbyPage() {
   const meInLobby = session?.participants?.find((p) => String(p.participantId) === myParticipantId);
   const isPlayer = Boolean(meInLobby && meInLobby.role === "PLAYER");
 
-  const poll = useCallback(async () => {
-    try {
-      const [stateRes, lbRes] = await Promise.all([
-        apiClient.get(`/live/sessions/${sessionId}`),
-        apiClient.get(`/live/sessions/${sessionId}/leaderboard`)
-      ]);
-      setSession(stateRes.data);
-      setLeaderboard(lbRes.data || []);
-      setError("");
-    } catch (err) {
-      setError(err?.response?.data?.message || "Không tải được phòng.");
-    }
-  }, [sessionId]);
-
-  useEffect(() => {
-    poll();
-    const id = setInterval(poll, 1500);
-    return () => clearInterval(id);
-  }, [poll]);
+  // Hook useLiveSession tự động fetch dữ liệu và đăng ký WebSocket STOMP.
+  // Không cần setInterval nữa.
 
   useEffect(() => {
     if (!session || navigatedToPlayRef.current) return;

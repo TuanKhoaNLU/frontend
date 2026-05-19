@@ -27,6 +27,7 @@ function ProfilePage({ isLoggedIn }) {
     fullName: "",
     phoneNumber: "",
     avatarUrl: "",
+    avatarFile: null,
     role: ""
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -69,17 +70,17 @@ function ProfilePage({ isLoggedIn }) {
         setError("Image is too large. Please select an image under 2MB.");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfile(prev => ({ ...prev, avatarUrl: reader.result }));
-        setShowIllustrations(false);
-      };
-      reader.readAsDataURL(file);
+      setProfile(prev => ({
+        ...prev,
+        avatarFile: file,
+        avatarUrl: URL.createObjectURL(file)
+      }));
+      setShowIllustrations(false);
     }
   };
 
   const handlePredefinedAvatarSelect = (url) => {
-    setProfile(prev => ({ ...prev, avatarUrl: url }));
+    setProfile(prev => ({ ...prev, avatarUrl: url, avatarFile: null }));
     setShowIllustrations(false);
   };
 
@@ -90,10 +91,19 @@ function ProfilePage({ isLoggedIn }) {
     setError(null);
 
     try {
-      await apiClient.put("/users/profile", {
-        fullName: profile.fullName,
-        phoneNumber: profile.phoneNumber,
-        avatarUrl: profile.avatarUrl
+      const formData = new FormData();
+      if (profile.fullName) formData.append("fullName", profile.fullName);
+      if (profile.phoneNumber) formData.append("phoneNumber", profile.phoneNumber);
+      
+      if (profile.avatarFile) {
+        formData.append("avatarFile", profile.avatarFile);
+      } else if (profile.avatarUrl && !profile.avatarUrl.startsWith("blob:")) {
+        // Chỉ gửi avatarUrl nếu nó là Dicebear hoặc Cloudinary URL (không gửi URL object cục bộ)
+        formData.append("avatarUrl", profile.avatarUrl);
+      }
+
+      await apiClient.put("/users/profile", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
       setMessage("Profile updated successfully!");
     } catch (err) {

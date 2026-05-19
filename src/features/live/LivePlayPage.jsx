@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import apiClient from "../../api/client";
+import { useLiveSession } from "./useLiveSession";
 import "./LiveQuizPages.css";
 
 function LivePlayPage() {
@@ -18,10 +19,7 @@ function LivePlayPage() {
     return sessionStorage.getItem(`live:${sessionId}:name`) || "";
   });
 
-  const [session, setSession] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const { session, leaderboard, error, setLeaderboard, setError } = useLiveSession(sessionId);
   const [submitting, setSubmitting] = useState(false);
   const [lastSubmitMsg, setLastSubmitMsg] = useState("");
   const [answeredThisSlide, setAnsweredThisSlide] = useState(false);
@@ -48,27 +46,7 @@ function LivePlayPage() {
     }
   }, [slideKey]);
 
-  const poll = useCallback(async () => {
-    try {
-      const [stateRes, lbRes] = await Promise.all([
-        apiClient.get(`/live/sessions/${sessionId}`),
-        apiClient.get(`/live/sessions/${sessionId}/leaderboard`)
-      ]);
-      setSession(stateRes.data);
-      setLeaderboard(lbRes.data || []);
-      setError("");
-    } catch (err) {
-      setError(err?.response?.data?.message || "Không tải được trạng thái phòng.");
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
-
-  useEffect(() => {
-    poll();
-    const id = setInterval(poll, 1500);
-    return () => clearInterval(id);
-  }, [poll]);
+  // useLiveSession hook đã tự động quản lý kết nối STOMP.
 
   useEffect(() => {
     if (!session) return;
@@ -216,7 +194,7 @@ function LivePlayPage() {
     );
   }
 
-  if (loading && !session) {
+  if (!session && !error) {
     return (
       <section className="create-quiz live-page">
         <p>Đang kết nối phòng...</p>

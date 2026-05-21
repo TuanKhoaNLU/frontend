@@ -57,38 +57,38 @@ function App() {
           </Link>
           <nav className="app-nav" aria-label="Main">
             <Link className="app-link app-link--primary" to="/">
-              Quizzes
+              🎯 Quizzes
             </Link>
             <Link className="app-link" to="/live/join">
-              Live (PIN)
+              📡 Live (PIN)
             </Link>
             {token && (
               <>
                 <Link className="app-link" to="/create-quiz">
-                  Create Quiz
+                  ✏️ Create Quiz
                 </Link>
                 <Link className="app-link" to="/my-quizzes">
-                  My Quizzes
+                  📚 My Quizzes
                 </Link>
                 <Link className="app-link" to="/profile">
-                  Profile
+                  👤 Profile
                 </Link>
               </>
             )}
             {!token ? (
               <>
                 <Link className="app-link" to="/register">
-                  Register
+                  📝 Register
                 </Link>
                 <Link className="app-link" to="/login">
-                  Sign in
+                  🔑 Sign in
                 </Link>
               </>
             ) : (
               <>
-                <span className="app-status">Logged in</span>
+                <span className="app-status">✅ Logged in</span>
                 <button className="app-logout" type="button" onClick={handleLogout}>
-                  Logout
+                  🚪 Logout
                 </button>
               </>
             )}

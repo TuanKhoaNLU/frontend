@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import apiClient from "../../api/client";
 import "./QuizListPage.css";
 
@@ -147,12 +147,10 @@ const getQuizCategory = (title) => {
   return "Trivia";
 };
 
-function QuizListPage({ isLoggedIn = false }) {
-  const navigate = useNavigate();
+function QuizListPage() {
   const [quizzes, setQuizzes] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [error, setError] = useState("");
-  const [roomId, setRoomId] = useState("");
 
   useEffect(() => {
     const fetchQuizzes = async () => {
@@ -193,32 +191,7 @@ function QuizListPage({ isLoggedIn = false }) {
           </div>
         </div>
         <div className="quiz-hero-card">
-          <form
-            className="quiz-room-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const pin = roomId.trim();
-              if (!pin) return;
-              navigate(`/live/join?pin=${encodeURIComponent(pin)}`);
-            }}
-          >
-            <label className="quiz-room-label" htmlFor="quiz-room-id">
-              Quiz room ID
-            </label>
-            <input
-              id="quiz-room-id"
-              className="quiz-room-input"
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              placeholder="Enter room code"
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value.trimStart())}
-            />
-            <button type="submit" className="quiz-room-submit" disabled={!roomId.trim()}>
-              Join room
-            </button>
-          </form>
+          <p className="quiz-room-label">Live mode has been removed.</p>
         </div>
       </section>
 
@@ -291,7 +264,7 @@ function QuizListPage({ isLoggedIn = false }) {
                     {catStyle.icon}
                   </div>
                   <span className={`quiz-badge ${quiz.published ? "" : "draft"}`}>
-                    {quiz.published ? "Live" : "Draft"}
+                    {quiz.published ? "Public" : "Draft"}
                   </span>
                 </div>
                 <h3 className="quiz-item-title">{quiz.title}</h3>
@@ -300,11 +273,6 @@ function QuizListPage({ isLoggedIn = false }) {
                   <Link className="quiz-item-play" to={`/play/${quiz.id}`}>
                     Play now
                   </Link>
-                  {isLoggedIn && (
-                    <Link className="quiz-item-play quiz-item-play--secondary" to={`/live/host/${quiz.id}`}>
-                      Tạo phòng live
-                    </Link>
-                  )}
                 </div>
               </li>
             );

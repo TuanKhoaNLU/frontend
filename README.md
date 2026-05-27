@@ -1,6 +1,6 @@
 # Quiz Web - FrontEnd
 
-Đây là giao diện người dùng (FrontEnd) của ứng dụng trắc nghiệm (Quiz Web). Ứng dụng cung cấp giao diện để người chơi đăng nhập, quản lý hồ sơ, tạo bài thi và tham gia phòng chơi trực tuyến.
+Đây là giao diện người dùng (FrontEnd) của ứng dụng trắc nghiệm (Quiz Web). Ứng dụng cung cấp giao diện để người chơi đăng nhập, quản lý hồ sơ, tạo bài thi và làm quiz.
 
 ## Yêu cầu hệ thống
 - Node.js (phiên bản 18 trở lên)
@@ -36,5 +36,4 @@
   - `auth/`: Đăng nhập, đăng ký.
   - `profile/`: Quản lý hồ sơ, đổi ảnh đại diện.
   - `quiz/`: Quản lý, chỉnh sửa và danh sách bài thi.
-  - `live/`: Các trang dành cho việc tham gia phòng thi, nhập mã PIN.
 - `src/App.jsx`: File cấu hình giao diện tổng thể và menu chuyển trang.

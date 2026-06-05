@@ -11,6 +11,15 @@ function normalizeTextList(values) {
   return (values || []).map((v) => (v == null ? "" : v.trim().toLowerCase())).filter(Boolean);
 }
 
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 function PlayQuizPage() {
   const { quizId } = useParams();
   const [quiz, setQuiz] = useState(null);
@@ -30,6 +39,7 @@ function PlayQuizPage() {
   const [submitting, setSubmitting] = useState(false);
   const [nickname, setNickname] = useState("");
   const [nicknameConfirmed, setNicknameConfirmed] = useState(false);
+  const [orderingDragIndex, setOrderingDragIndex] = useState(null);
 
   const intervalRef = useRef(null);
   const advanceTimeoutRef = useRef(null);
@@ -51,7 +61,13 @@ function PlayQuizPage() {
   const current = slide ? answers[slide.slideId] || {} : {};
   const isLocked = Boolean(current.locked);
   const isSingleChoice = slide?.type === "SINGLE_CHOICE";
-  const canSelect = nicknameConfirmed && slide && !slideRevealed && !finished && (!isLocked || !isSingleChoice);
+  const isMultiChoice = slide?.type === "MULTI_CHOICE";
+  const isOrdering = slide?.type === "ORDERING";
+  const isText = slide?.type === "TEXT";
+  const canInteract = nicknameConfirmed && slide && !slideRevealed && !finished;
+  const canSelectChoice = canInteract && (!isSingleChoice || !isLocked);
+  const canReorder = canInteract && isOrdering;
+  const canEditText = canInteract && isText && !isLocked;
 
   useEffect(() => {
     const load = async () => {
@@ -149,7 +165,7 @@ function PlayQuizPage() {
 
   const lockAnswer = useCallback(
     (patch) => {
-      if (!slide || !canSelect) return;
+      if (!slide || !canInteract) return;
       const elapsedMs = Math.max(0, Date.now() - (slideTimerStartedAt || Date.now()));
       setAnswers((prev) => ({
         ...prev,
@@ -162,18 +178,18 @@ function PlayQuizPage() {
         }
       }));
     },
-    [canSelect, slide, slideTimerStartedAt]
+    [canInteract, slide, slideTimerStartedAt]
   );
 
   const handleSingleChoice = (idx) => {
-    if (!canSelect) return;
+    if (!canSelectChoice) return;
     lockAnswer({ selectedOptionIndexes: [idx] });
   };
 
-  const handleMultiChoice = (idx, checked) => {
-    if (!canSelect || slideRevealed) return;
+  const handleMultiChoice = (idx) => {
+    if (!canSelectChoice) return;
     const selected = current.selectedOptionIndexes || [];
-    const next = checked ? [...selected, idx] : selected.filter((i) => i !== idx);
+    if (selected.includes(idx)) return;
     const elapsedMs = Math.max(0, Date.now() - (slideTimerStartedAt || Date.now()));
     setAnswers((prev) => ({
       ...prev,
@@ -182,14 +198,13 @@ function PlayQuizPage() {
         elapsedMs,
         locked: false,
         ...prev[slide.slideId],
-        selectedOptionIndexes: next
+        selectedOptionIndexes: [...selected, idx]
       }
     }));
   };
 
-  const handleOrderingChange = (value) => {
-    if (!canSelect || slideRevealed) return;
-    const items = value.split("\n").map((v) => v.trim()).filter(Boolean);
+  const handleOrderingReorder = (items) => {
+    if (!canReorder) return;
     const elapsedMs = Math.max(0, Date.now() - (slideTimerStartedAt || Date.now()));
     setAnswers((prev) => ({
       ...prev,
@@ -203,8 +218,16 @@ function PlayQuizPage() {
     }));
   };
 
+  const moveOrderingItem = (fromIndex, toIndex) => {
+    if (!canReorder || fromIndex === toIndex) return;
+    const items = [...(current.orderedItems || [])];
+    const [moved] = items.splice(fromIndex, 1);
+    items.splice(toIndex, 0, moved);
+    handleOrderingReorder(items);
+  };
+
   const handleTextChange = (value) => {
-    if (!canSelect || slideRevealed) return;
+    if (!canEditText) return;
     const elapsedMs = Math.max(0, Date.now() - (slideTimerStartedAt || Date.now()));
     setAnswers((prev) => ({
       ...prev,
@@ -218,11 +241,34 @@ function PlayQuizPage() {
     }));
   };
 
+  const handleTextSubmit = () => {
+    if (!canEditText) return;
+    const text = (current.textAnswer || "").trim();
+    if (!text) return;
+    lockAnswer({ textAnswer: text });
+  };
+
+  useEffect(() => {
+    if (!slide || slide.type !== "ORDERING" || !nicknameConfirmed) return;
+    const existing = answersRef.current[slide.slideId]?.orderedItems;
+    if (existing?.length) return;
+    const initial = shuffleArray(slide.options || []);
+    setAnswers((prev) => ({
+      ...prev,
+      [slide.slideId]: {
+        slideId: slide.slideId,
+        orderedItems: initial,
+        locked: false
+      }
+    }));
+  }, [slide?.slideId, slide?.type, slide?.options, nicknameConfirmed]);
+
   useEffect(() => {
     if (!slide || !nicknameConfirmed || finished) return;
 
     setSlideRevealed(false);
     setSlideTimerStartedAt(null);
+    setOrderingDragIndex(null);
 
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -295,7 +341,7 @@ function PlayQuizPage() {
     const selected = current.selectedOptionIndexes || [];
     const correct = slide.correctOptionIndexes || [];
 
-    if (isLocked && selected.includes(idx)) {
+    if (selected.includes(idx)) {
       classes.push("slide-option-row--selected");
     }
     if (!slideRevealed) return classes.join(" ");
@@ -463,41 +509,73 @@ function PlayQuizPage() {
         {slide.imageUrl && <img src={slide.imageUrl} alt="" />}
 
         {(slide.type === "SINGLE_CHOICE" || slide.type === "MULTI_CHOICE") && (
-          <div className="slide-options">
-            {(slide.options || []).map((option, idx) => {
-              const selected = current.selectedOptionIndexes || [];
-              const isSingle = slide.type === "SINGLE_CHOICE";
-              return (
-                <label key={idx} className={getOptionClass(idx)}>
-                  <input
-                    type={isSingle ? "radio" : "checkbox"}
-                    name={`slide-${slide.slideId}`}
-                    checked={selected.includes(idx)}
-                    disabled={!canSelect}
-                    onChange={(e) => {
-                      if (isSingle) {
-                        handleSingleChoice(idx);
-                      } else {
-                        handleMultiChoice(idx, e.target.checked);
+          <>
+            {isMultiChoice && (
+              <p className="play-type-hint">Chọn tất cả đáp án đúng — đã chọn thì không thể bỏ chọn.</p>
+            )}
+            <div className="slide-options">
+              {(slide.options || []).map((option, idx) => {
+                const selected = current.selectedOptionIndexes || [];
+                const isSelected = selected.includes(idx);
+                return (
+                  <div
+                    key={idx}
+                    role="button"
+                    tabIndex={canSelectChoice && !isSelected ? 0 : -1}
+                    className={getOptionClass(idx)}
+                    onClick={() => {
+                      if (isSingleChoice) handleSingleChoice(idx);
+                      else handleMultiChoice(idx);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (isSingleChoice) handleSingleChoice(idx);
+                        else handleMultiChoice(idx);
                       }
                     }}
-                  />
-                  <span>{option}</span>
-                </label>
-              );
-            })}
-          </div>
+                  >
+                    <span className="slide-option-row__marker">
+                      {isSingleChoice ? (isSelected ? "●" : "○") : isSelected ? "✓" : "□"}
+                    </span>
+                    <span>{option}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {slide.type === "ORDERING" && (
           <>
-            <textarea
-              className={`create-quiz-input create-quiz-textarea ${slideRevealed ? (isOrderingCorrect ? "play-input--correct" : "play-input--wrong") : ""}`}
-              placeholder="Nhập theo thứ tự đúng, mỗi dòng 1 mục"
-              value={(current.orderedItems || []).join("\n")}
-              disabled={!canSelect}
-              onChange={(e) => handleOrderingChange(e.target.value)}
-            />
+            <p className="play-type-hint">Kéo thả các mục để sắp xếp đúng thứ tự.</p>
+            <ol className={`ordering-list ${slideRevealed ? (isOrderingCorrect ? "ordering-list--correct" : "ordering-list--wrong") : ""}`}>
+              {(current.orderedItems || []).map((item, idx) => {
+                const correctAtIdx =
+                  slideRevealed && normalizeTextList(slide.correctOrderingItems)[idx] === item.trim().toLowerCase();
+                const wrongAtIdx = slideRevealed && !correctAtIdx;
+                return (
+                  <li
+                    key={`${idx}-${item}`}
+                    className={`ordering-item ${orderingDragIndex === idx ? "ordering-item--dragging" : ""} ${correctAtIdx ? "ordering-item--correct" : ""} ${wrongAtIdx ? "ordering-item--wrong" : ""}`}
+                    draggable={canReorder}
+                    onDragStart={() => setOrderingDragIndex(idx)}
+                    onDragEnd={() => setOrderingDragIndex(null)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => {
+                      if (orderingDragIndex !== null) moveOrderingItem(orderingDragIndex, idx);
+                      setOrderingDragIndex(null);
+                    }}
+                  >
+                    <span className="ordering-item__grip" aria-hidden="true">
+                      ⋮⋮
+                    </span>
+                    <span className="ordering-item__index">{idx + 1}</span>
+                    <span className="ordering-item__text">{item}</span>
+                  </li>
+                );
+              })}
+            </ol>
             {slideRevealed && (
               <p className="play-reveal-answer">
                 Đáp án đúng: {(slide.correctOrderingItems || []).join(" → ")}
@@ -510,11 +588,20 @@ function PlayQuizPage() {
           <>
             <input
               className={`create-quiz-input ${slideRevealed ? (isTextCorrect ? "play-input--correct" : "play-input--wrong") : ""}`}
-              placeholder="Nhập đáp án"
+              placeholder="Nhập đáp án và nhấn Enter"
               value={current.textAnswer || ""}
-              disabled={!canSelect}
+              disabled={!canEditText}
               onChange={(e) => handleTextChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleTextSubmit();
+                }
+              }}
             />
+            {isLocked && !slideRevealed && (
+              <p className="play-locked-hint">Đã xác nhận — chờ hết thời gian để xem kết quả.</p>
+            )}
             {slideRevealed && (
               <p className="play-reveal-answer">
                 Đáp án đúng: {(slide.acceptedAnswers || []).join(", ")}

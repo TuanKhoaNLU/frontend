@@ -1,18 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import apiClient from "../../api/client";
 import "./QuizListPage.css";
-
-const CATEGORY_CHIPS = [
-  { label: "All", tone: "chip--all", icon: "🌐" },
-  { label: "Art & Literature", tone: "chip--1", icon: "🎨" },
-  { label: "Entertainment", tone: "chip--2", icon: "🎬" },
-  { label: "Geography", tone: "chip--3", icon: "🌍" },
-  { label: "History", tone: "chip--4", icon: "📜" },
-  { label: "Science & Nature", tone: "chip--5", icon: "🔬" },
-  { label: "Sports", tone: "chip--6", icon: "⚽" },
-  { label: "Trivia", tone: "chip--7", icon: "🧠" },
-];
 
 const CARD_TONES = ["card--a", "card--b", "card--c", "card--d"];
 
@@ -97,6 +86,28 @@ function LightbulbIcon() {
   );
 }
 
+function AllIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+    </svg>
+  );
+}
+
+const CATEGORY_CHIPS = [
+  { label: "All", tone: "chip--all", icon: <AllIcon /> },
+  { label: "Art & Literature", tone: "chip--1", icon: <PaletteIcon /> },
+  { label: "Entertainment", tone: "chip--2", icon: <FilmIcon /> },
+  { label: "Geography", tone: "chip--3", icon: <GlobeIcon /> },
+  { label: "History", tone: "chip--4", icon: <HourglassIcon /> },
+  { label: "Science & Nature", tone: "chip--5", icon: <AtomIcon /> },
+  { label: "Sports", tone: "chip--6", icon: <TrophyIcon /> },
+  { label: "Trivia", tone: "chip--7", icon: <LightbulbIcon /> },
+];
+
 const CATEGORY_STYLES = {
   "Art & Literature": {
     gradient: "linear-gradient(135deg, #ec4899 0%, #ef4444 100%)",
@@ -110,7 +121,7 @@ const CATEGORY_STYLES = {
   },
   "Geography": {
     gradient: "linear-gradient(135deg, #10b981 0%, #14b8a6 100%)",
-    shadow: "rgba(16, 185, 129, 0.3)",
+    shadow: "rgba(10, 185, 129, 0.3)",
     icon: <GlobeIcon />
   },
   "History": {
@@ -147,10 +158,23 @@ const getQuizCategory = (title) => {
   return "Trivia";
 };
 
-function QuizListPage() {
+function QuizListPage({ isLoggedIn = false }) {
+  const navigate = useNavigate();
+  
+  // Quiz states
   const [quizzes, setQuizzes] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [error, setError] = useState("");
+  const [roomId, setRoomId] = useState("");
+
+  // AI Panel control state
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiTitle, setAiTitle] = useState("");
+  const [aiCount, setAiCount] = useState(5);
+  const [aiTimeLimit, setAiTimeLimit] = useState(5);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiSuccess, setAiSuccess] = useState("");
 
   useEffect(() => {
     const fetchQuizzes = async () => {
@@ -164,6 +188,52 @@ function QuizListPage() {
 
     fetchQuizzes();
   }, []);
+
+  const handleAiGenerate = async (e) => {
+    e.preventDefault();
+    setAiError("");
+    setAiSuccess("");
+    setAiLoading(true);
+
+    try {
+      const payload = {
+        quizTitle: aiTitle.trim(),
+        numberOfQuestions: aiCount,
+        timeLimitSeconds: aiTimeLimit,
+      };
+
+      const response = await apiClient.post("/quizzes/generate-ai", payload);
+      setAiSuccess(`Tạo thành công bộ câu hỏi AI: #${response.data.id}`);
+      setAiTitle("");
+      setAiCount(5);
+      setAiTimeLimit(5);
+
+      // Load lại danh sách quiz
+      const refreshResponse = await apiClient.get("/quizzes");
+      setQuizzes(refreshResponse.data);
+
+      // Tự động đóng panel sau khi hoàn thành thành công
+      setTimeout(() => {
+        setShowAiPanel(false);
+        setAiSuccess("");
+      }, 3000);
+
+      // Cuộn xuống danh sách quiz sau khi tạo xong để hiển thị kết quả
+      setTimeout(() => {
+        const listEl = document.getElementById("quiz-list");
+        if (listEl) {
+          listEl.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 1000);
+
+    } catch (err) {
+      console.error(err);
+      const message = err?.response?.data?.message || err?.response?.data || "Sinh câu hỏi tự động thất bại. Hãy chắc chắn Server Backend đang hoạt động.";
+      setAiError(message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const filteredQuizzes = quizzes.filter((quiz) => {
     if (selectedCategory === "All") return true;
@@ -188,11 +258,149 @@ function QuizListPage() {
             <Link className="quiz-btn quiz-btn--ghost" to="/create-quiz">
               Create quiz
             </Link>
+            <button
+              type="button"
+              className={`quiz-btn quiz-btn--ai ${showAiPanel ? "active" : ""}`}
+              onClick={() => {
+                setShowAiPanel((prev) => !prev);
+                setAiError("");
+                setAiSuccess("");
+                if (!showAiPanel) {
+                  setTimeout(() => {
+                    const inputEl = document.getElementById("ai-title");
+                    if (inputEl) inputEl.focus();
+                  }, 150);
+                }
+              }}
+            >
+              ✨ AI Creator
+            </button>
           </div>
         </div>
+
+        {/* Cột bên phải: Trả về nguyên bản chỉ nhập PIN phòng */}
         <div className="quiz-hero-card">
-          <p className="quiz-room-label">Live mode has been removed.</p>
+          <form
+            className="quiz-room-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const pin = roomId.trim();
+              if (!pin) return;
+              navigate(`/live/join?pin=${encodeURIComponent(pin)}`);
+            }}
+          >
+            <label className="quiz-room-label" htmlFor="quiz-room-id">
+              📡 Quiz room ID
+            </label>
+            <input
+              id="quiz-room-id"
+              className="quiz-room-input"
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              placeholder="Enter room code"
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value.trimStart())}
+            />
+            <button type="submit" className="quiz-room-submit" disabled={!roomId.trim()}>
+              Join room
+            </button>
+          </form>
         </div>
+
+        {/* Panel xổ xuống toàn màn hình chiều ngang nằm dưới Hero */}
+        {showAiPanel && (
+          <div className="quiz-hero-ai-panel">
+            <button
+              type="button"
+              className="ai-panel-close-btn"
+              onClick={() => setShowAiPanel(false)}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+            <h3 className="ai-panel-title">✨ AI Quiz Creator</h3>
+            <p className="ai-panel-desc">Tạo bộ câu hỏi nhanh chóng bằng trí tuệ nhân tạo chỉ với tên chủ đề.</p>
+
+            {!isLoggedIn ? (
+              <div className="quiz-ai-locked-panel">
+                <p className="ai-lock-text">Bạn cần đăng nhập tài khoản để sử dụng tính năng tạo Quiz tự động bằng AI.</p>
+                <Link className="quiz-btn quiz-btn--primary" to="/login">
+                  Đi tới Đăng nhập
+                </Link>
+              </div>
+            ) : (
+              <form className="ai-panel-form-layout" onSubmit={handleAiGenerate}>
+                <div className="ai-form-col">
+                  <label className="quiz-room-label" htmlFor="ai-title">
+                    Chủ đề Quiz
+                  </label>
+                  <input
+                    id="ai-title"
+                    className="quiz-room-input"
+                    type="text"
+                    placeholder="Ví dụ: Lập trình Java, Lịch sử Việt Nam..."
+                    value={aiTitle}
+                    onChange={(e) => setAiTitle(e.target.value)}
+                    disabled={aiLoading}
+                    required
+                  />
+                </div>
+
+                <div className="ai-form-col">
+                  <div className="ai-slider-row">
+                    <label className="quiz-room-label" htmlFor="ai-count">
+                      Số câu hỏi: {aiCount}
+                    </label>
+                    <input
+                      id="ai-count"
+                      type="range"
+                      min="1"
+                      max="20"
+                      value={aiCount}
+                      onChange={(e) => setAiCount(Number(e.target.value))}
+                      disabled={aiLoading}
+                      className="ai-slider"
+                    />
+                  </div>
+
+                  <div className="ai-slider-row" style={{ marginTop: "12px" }}>
+                    <label className="quiz-room-label" htmlFor="ai-time-limit">
+                      Thời gian trả lời: {aiTimeLimit} giây
+                    </label>
+                    <input
+                      id="ai-time-limit"
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={aiTimeLimit}
+                      onChange={(e) => setAiTimeLimit(Number(e.target.value))}
+                      disabled={aiLoading}
+                      className="ai-slider"
+                    />
+                  </div>
+                </div>
+
+                <div className="ai-form-col ai-form-col--submit">
+                  {aiError && <div className="ai-alert ai-alert--error">{aiError}</div>}
+                  {aiSuccess && <div className="ai-alert ai-alert--success">{aiSuccess}</div>}
+                  
+                  <button
+                    type="submit"
+                    className="quiz-ai-submit"
+                    disabled={aiLoading || !aiTitle.trim()}
+                  >
+                    {aiLoading ? (
+                      <span className="spinner-loader"></span>
+                    ) : (
+                      "✨ Generate Quiz"
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="quiz-categories" aria-label="Popular topics">
@@ -232,11 +440,11 @@ function QuizListPage() {
 
         {!error && filteredQuizzes.length === 0 && (
           <div className="quiz-empty">
-            <p className="quiz-empty-title">No quizzes yet</p>
+            <p className="quiz-empty-title">Chưa có bộ câu hỏi nào</p>
             <p className="quiz-empty-text">
               {selectedCategory === "All"
-                ? "Start the API and refresh — sample quizzes will appear here."
-                : `There are no quizzes currently available for the ${selectedCategory} category.`}
+                ? "Hãy sử dụng tính năng ✨ AI Creator ở trên để tạo bộ câu hỏi tự động ngay!"
+                : `Không có bộ câu hỏi nào thuộc chủ đề "${selectedCategory}".`}
             </p>
           </div>
         )}
@@ -264,7 +472,7 @@ function QuizListPage() {
                     {catStyle.icon}
                   </div>
                   <span className={`quiz-badge ${quiz.published ? "" : "draft"}`}>
-                    {quiz.published ? "Public" : "Draft"}
+                    {quiz.published ? "Live" : "Draft"}
                   </span>
                 </div>
                 <h3 className="quiz-item-title">{quiz.title}</h3>
@@ -273,6 +481,11 @@ function QuizListPage() {
                   <Link className="quiz-item-play" to={`/play/${quiz.id}`}>
                     Play now
                   </Link>
+                  {isLoggedIn && (
+                    <Link className="quiz-item-play quiz-item-play--secondary" to={`/live/host/${quiz.id}`}>
+                      Tạo phòng live
+                    </Link>
+                  )}
                 </div>
               </li>
             );

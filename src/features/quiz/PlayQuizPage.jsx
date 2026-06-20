@@ -192,7 +192,9 @@ function PlayQuizPage() {
   const handleMultiChoice = (idx) => {
     if (!canSelectChoice) return;
     const selected = current.selectedOptionIndexes || [];
-    if (selected.includes(idx)) return;
+    const nextSelected = selected.includes(idx)
+      ? selected.filter((i) => i !== idx)
+      : [...selected, idx];
     const elapsedMs = Math.max(0, Date.now() - (slideTimerStartedAt || Date.now()));
     setAnswers((prev) => ({
       ...prev,
@@ -201,7 +203,7 @@ function PlayQuizPage() {
         elapsedMs,
         locked: false,
         ...prev[slide.slideId],
-        selectedOptionIndexes: [...selected, idx]
+        selectedOptionIndexes: nextSelected
       }
     }));
   };
@@ -517,7 +519,7 @@ function PlayQuizPage() {
         {(slide.type === "SINGLE_CHOICE" || slide.type === "MULTI_CHOICE") && (
           <>
             {isMultiChoice && (
-              <p className="play-type-hint">Chọn tất cả đáp án đúng — đã chọn thì không thể bỏ chọn.</p>
+              <p className="play-type-hint">Chọn tất cả các đáp án đúng. Bạn có thể bỏ chọn nếu muốn.</p>
             )}
             <div className="slide-options">
               {(slide.options || []).map((option, idx) => {

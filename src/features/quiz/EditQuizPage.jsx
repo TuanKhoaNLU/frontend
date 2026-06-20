@@ -269,7 +269,7 @@ function EditQuizPage({ isLoggedIn }) {
           <article className="slide-card" key={`slide-${index}`}>
             <div className="slide-card-top">
               <h3>Slide {index + 1}</h3>
-              <button type="button" className="slide-remove" onClick={() => removeSlide(index)}>
+              <button type="button" className="slide-remove" onClick={() => removeSlide(index)} disabled={slides.length <= 1}>
                 Xóa slide
               </button>
             </div>
@@ -359,7 +359,7 @@ function EditQuizPage({ isLoggedIn }) {
                       value={item}
                       onChange={(e) => updateOrderingItem(index, itemIndex, e.target.value)}
                     />
-                    <button type="button" className="slide-inline-button" onClick={() => removeOrderingItem(index, itemIndex)}>
+                    <button type="button" className="slide-inline-button" onClick={() => removeOrderingItem(index, itemIndex)} disabled={slide.orderingItems.length <= 2}>
                       Xóa
                     </button>
                   </div>

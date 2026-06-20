@@ -163,6 +163,7 @@ function QuizListPage({ isLoggedIn = false }) {
   
   // Quiz states
   const [quizzes, setQuizzes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [error, setError] = useState("");
   const [roomId, setRoomId] = useState("");
@@ -178,11 +179,14 @@ function QuizListPage({ isLoggedIn = false }) {
 
   useEffect(() => {
     const fetchQuizzes = async () => {
+      setLoading(true);
       try {
         const response = await apiClient.get("/quizzes");
         setQuizzes(response.data);
       } catch (err) {
         setError("Cannot load quizzes. Start the backend first.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -438,7 +442,14 @@ function QuizListPage({ isLoggedIn = false }) {
           </div>
         )}
 
-        {!error && filteredQuizzes.length === 0 && (
+        {loading && (
+          <div className="quiz-empty">
+            <p className="quiz-empty-title">Đang tải dữ liệu...</p>
+            <p className="quiz-empty-text">Vui lòng chờ trong giây lát.</p>
+          </div>
+        )}
+
+        {!loading && !error && filteredQuizzes.length === 0 && (
           <div className="quiz-empty">
             <p className="quiz-empty-title">Chưa có bộ câu hỏi nào</p>
             <p className="quiz-empty-text">

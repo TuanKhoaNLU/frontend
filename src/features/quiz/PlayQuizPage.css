@@ -211,12 +211,10 @@
   color: #0f172a;
 }
 
-.play-quiz-page .slide-option-row--selected span {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.14) 0%, rgba(249, 115, 22, 0.14) 100%);
-  border: 1px solid rgba(124, 58, 237, 0.25);
-  padding: 6px 10px;
-  border-radius: 12px;
-  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.16);
+.play-quiz-page .slide-option-row--selected {
+  border-color: rgba(124, 58, 237, 0.45);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(249, 115, 22, 0.06) 100%);
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.14);
 }
 
 .play-quiz-page .slide-option-row--correct {

@@ -186,7 +186,17 @@ function PlayQuizPage() {
 
   const handleSingleChoice = (idx) => {
     if (!canSelectChoice) return;
-    lockAnswer({ selectedOptionIndexes: [idx] });
+    const elapsedMs = Math.max(0, Date.now() - (slideTimerStartedAt || Date.now()));
+    setAnswers((prev) => ({
+      ...prev,
+      [slide.slideId]: {
+        slideId: slide.slideId,
+        elapsedMs,
+        locked: false,
+        ...prev[slide.slideId],
+        selectedOptionIndexes: [idx]
+      }
+    }));
   };
 
   const handleMultiChoice = (idx) => {

@@ -30,6 +30,7 @@ function PlayQuizPage() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [startedAt, setStartedAt] = useState(Date.now());
   const [countdown, setCountdown] = useState(null);
+  const [msLeft, setMsLeft] = useState(null);
   const [slideLimitSec, setSlideLimitSec] = useState(10);
   const [timerPhase, setTimerPhase] = useState("idle"); // idle | reading | answering | revealed
   const [slideTimerStartedAt, setSlideTimerStartedAt] = useState(null);
@@ -123,6 +124,7 @@ function PlayQuizPage() {
     setIndex((prev) => prev + 1);
     setSlideRevealed(false);
     setCountdown(null);
+    setMsLeft(null);
     setTimerPhase("idle");
     setSlideTimerStartedAt(null);
   }, [index, quiz, submitAttempt]);
@@ -156,6 +158,7 @@ function PlayQuizPage() {
     setSlideRevealed(true);
     setTimerPhase("revealed");
     setCountdown(0);
+    setMsLeft(0);
     scheduleAdvance();
   }, [finalizeSlideAnswer, scheduleAdvance]);
 
@@ -292,12 +295,15 @@ function PlayQuizPage() {
       setSlideTimerStartedAt(timerStart);
       setTimerPhase("answering");
       setCountdown(limitSec);
+      setMsLeft(limitSec * 1000);
 
       const endAt = timerStart + limitSec * 1000;
       const tick = () => {
-        const left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+        const now = Date.now();
+        const left = Math.max(0, Math.ceil((endAt - now) / 1000));
         setCountdown(left);
-        if (left <= 0) {
+        setMsLeft(Math.max(0, endAt - now));
+        if (now >= endAt) {
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -482,7 +488,7 @@ function PlayQuizPage() {
               <div
                 className="play-quiz-timer-panel__bar-fill"
                 style={{
-                  width: `${slideLimitSec > 0 ? Math.max(0, ((countdown ?? 0) / slideLimitSec) * 100) : 0}%`
+                  width: `${slideLimitSec > 0 ? Math.max(0, ((msLeft ?? ((countdown ?? 0) * 1000)) / (slideLimitSec * 1000)) * 100) : 0}%`
                 }}
               />
             </div>
